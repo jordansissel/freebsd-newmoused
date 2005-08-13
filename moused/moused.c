@@ -31,7 +31,7 @@ static int verbose = 0;
 static void logmsg(int level, int errnum, const char *fmt, ...);
 static int moused(int argc, char **argv);
 static void loadmodule(char *path);
-static void update(struct mouse_info *delta);
+static int update(struct mouse_info *delta);
 
 #define debug(level, fmt, args...) do {                        \
 	if (level <= verbose)                                       \
@@ -45,12 +45,12 @@ static void update(struct mouse_info *delta);
 
 #define MOUSED_OPTIONS "d:m:f:"
 
-static struct rodentparam rodent = {
+static rodent_t rodent = {
 	.device = NULL,
 	.modulename = NULL,
 	.configfile = "/etc/moused.conf",
 	.cfd = 0,
-	.updatefunc = update,
+	.update = update, /* Modules call moused's update(...) to talk to sysmouse */
 };
 
 int main(int argc, char **argv) {
@@ -91,7 +91,7 @@ int moused(int argc, char **argv) {
 					rodent.modulename, rodent.modulename);
 		printf("Path: %s\n", path);
 		loadmodule(path);
-		rodent.init(&rodent);
+		rodent.init(&rodent, argc, argv);
 		if (rodent.probe(&rodent) == MODULE_PROBE_SUCCESS) {
 			/* MAIN FUNCTION */
 			rodent.run(&rodent);
@@ -123,11 +123,11 @@ static void loadmodule(char *path) {
 		logfatal(1, "Unable open module '%s'.", rodent.modulename);
 	}
 
-	rodent.init = dlsym(handle, "init");
+	//rodent.init = dlsym(handle, "init");
 	rodent.probe = dlsym(handle, "probe");
 	rodent.run = dlsym(handle, "run");
 }
 
-static void update(struct mouse_info *delta) {
-	ioctl(rodent.cfd, CONS_MOUSECTL, delta);
+static int update(struct mouse_info *delta) {
+	return ioctl(rodent.cfd, CONS_MOUSECTL, delta);
 }
