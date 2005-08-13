@@ -1,3 +1,10 @@
+/* 
+ * Demonstrative newmoused module
+ *
+ * Reads text-based commands from standard input tellint
+ * the mouse how to move, etc.
+ */
+
 #include <sys/types.h>
 
 #include <sys/mouse.h>
@@ -8,10 +15,11 @@
 #include <unistd.h>
 #include <string.h>
 
-MOUSED_INIT_FUNC {
-	update = rodent->updatefunc;
-}
-
+/* 
+ * Normally we'd be poking rodent.device and such to figure out
+ * if it's the kind of mouse we support. However, since this 
+ * kA
+ */
 MOUSED_PROBE_FUNC {
 	return MODULE_PROBE_SUCCESS;
 }
@@ -23,8 +31,7 @@ MOUSED_RUN_FUNC {
 	for (;;) {
 		m.operation = MOUSE_MOTION_EVENT;
 		m.u.data.x = -3;
-		update(&m);
+		rodent->update(&m);
 		sleep(1);
 	}
-
 }
