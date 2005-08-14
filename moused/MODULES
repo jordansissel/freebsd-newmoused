@@ -1,0 +1,29 @@
+Modules are the meat of what moused will do. Each individual module will
+support a specific kind of mouse (ideally).
+
+moused deals with minor things like setting up default values on the
+rodent_t structure. Plugins will handle the meat (talking to devices)
+
+How it works:
+  - Startup moused with whatever arguments (-m specifies module name)
+     * Example: moused -m command
+  - moused parses options and loads the 'command' module
+    (moused_command.so) with dlopen(3)
+  - If this fails for some reason, moused exits with error.
+  - The module's init function is called and passed a rodent_t*, argc,
+    and argv. 'argc' and 'argv' do NOT include options handled by moused
+    itself. This is so you can do your own option processing in your
+    module.
+     * Example: ./moused -m command -- -t Testing
+    Everything past the '--' gets sent to the init function as argc and argv.
+  - The module's probe function is then called. If it returns
+    MODULE_PROBE_SUCCESS, then the run function is called.
+  - The probe and run functions are passed a rodent_t* as the only
+    argument.
+
+  - Modules will operate however they need to. When mouse activity needs
+  to be passed to the system, modules will need to pass a mouse_info_t*
+  to rodent.update(). This in-turn calls the proper ioctl() on
+  /dev/consolectl to indicate the given activity.
+
+  * An example module is the 'command' module (modules/command).
