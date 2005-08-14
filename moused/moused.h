@@ -25,10 +25,6 @@ struct rodentparam {
 #define MOUSED_PROBE_FUNC int probe(rodent_t *rodent)
 #define MOUSED_RUN_FUNC   void run(rodent_t *rodent)
 
-#ifndef THIS_IS_MOUSED
-//static void (*update)(struct rodentparam *);
-#endif
-
 /* Probe function return values */
 #define MODULE_PROBE_FAIL    0
 #define MODULE_PROBE_SUCCESS 1

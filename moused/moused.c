@@ -21,9 +21,6 @@ __FBSDID("Happy Cakes!");
 #include <sys/mouse.h>
 #include <sys/consio.h>
 
-/* Don't include things needed by module libraries */
-#define THIS_IS_MOUSED 1
-
 #include "moused.h"
 
 static int verbose = 0;
