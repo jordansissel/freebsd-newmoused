@@ -1,5 +1,7 @@
 LIB=moused_command
+SRCS=moused_command.c ../../moused.h
+
+# This is needed to convince bsd.lib.mk to build a shared library
 SHLIB_MAJOR=1
-SRCS=moused_command.c
 
 .include <bsd.lib.mk>
