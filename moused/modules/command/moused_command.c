@@ -34,6 +34,20 @@ MOUSED_PROBE_FUNC {
 	return MODULE_PROBE_SUCCESS;
 }
 
+MOUSED_INIT_FUNC {
+	int c;
+
+	while (-1 != (c = getopt(argc, argv, "t:"))) {
+		switch (c) {
+			case 't':
+				printf("'t' option: %s\n", optarg); break;
+			default:
+				printf("Foo: %c\n", optopt);
+		} 
+	}
+	
+}
+
 MOUSED_RUN_FUNC {
 	char buf[BUFLEN];
 	int len = 0;
