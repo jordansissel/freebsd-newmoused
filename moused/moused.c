@@ -28,7 +28,7 @@ __FBSDID("Happy Cakes!");
 
 static int verbose = 0;
 
-static void logmsg(int level, int errnum, const char *fmt, ...);
+static void logmsg(int log_pri, int errnum, const char *fmt, ...);
 static int moused(int argc, char **argv);
 static void loadmodule(char *path);
 static int update(struct mouse_info *delta);
@@ -91,11 +91,17 @@ int moused(int argc, char **argv) {
 					rodent.modulename, rodent.modulename);
 		printf("Path: %s\n", path);
 		loadmodule(path);
-		rodent.init(&rodent, argc, argv);
+
+		if (NULL != rodent.init)
+			rodent.init(&rodent, argc, argv);
+
 		if (rodent.probe(&rodent) == MODULE_PROBE_SUCCESS) {
 			/* MAIN FUNCTION */
 			rodent.run(&rodent);
 		}
+	} else {
+		warnx("No module selected.");
+		exit(1);
 	}
 }
 
