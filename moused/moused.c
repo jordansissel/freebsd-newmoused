@@ -89,8 +89,12 @@ int moused(int argc, char **argv) {
 		printf("Path: %s\n", path);
 		loadmodule(path);
 
-		if (NULL != rodent.init)
+		if (NULL != rodent.init) {
+			/* Reset getopt stuffs (do it in case init() likes to use getopt) */
+			optreset = 1;
+			optind = 0;
 			rodent.init(&rodent, argc, argv);
+		}
 
 		if (rodent.probe(&rodent) == MODULE_PROBE_SUCCESS) {
 			/* MAIN FUNCTION */
@@ -126,7 +130,7 @@ static void loadmodule(char *path) {
 		logfatal(1, "Unable open module '%s'.", rodent.modulename);
 	}
 
-	//rodent.init = dlsym(handle, "init");
+	rodent.init = dlsym(handle, "init");
 	rodent.probe = dlsym(handle, "probe");
 	rodent.run = dlsym(handle, "run");
 }
