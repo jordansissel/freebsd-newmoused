@@ -93,8 +93,9 @@ static void command(rodent_t *rodent, char *buf, char *eol) {
 	tok = strsep(&string, " ");
 
 	/* XXX: MOUSE_MOTION_EVENT and MOUSE_ACTION produce the same results?! */
-	delta.operation = MOUSE_MOTION_EVENT;
-	//delta.operation = MOUSE_ACTION;
+	//delta.operation = MOUSE_MOTION_EVENT; /* Seems to only let movement happen */
+	delta.operation = MOUSE_ACTION; /* appears to let mouse button actions work */
+	
 	if (strcmp("movex", tok) == 0) {
 		tok = strsep(&string, " ");
 		delta.u.data.x = atoi(tok);
