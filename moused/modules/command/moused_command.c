@@ -19,7 +19,7 @@
 
 static const int BUFLEN = 512;
 
-static void command(rodent_t *rodent, char *buf, char *eol);
+static void command(rodent_t *rodent, char *buf);
 
 /* 
  * Normally we'd be poking rodent.device and such to figure out
@@ -69,26 +69,24 @@ MOUSED_RUN_FUNC {
 
 		/* Process data */
 		while (NULL != (eol = strchr(buf, '\n'))) {
-			command(rodent, buf, eol);
+			/* Null the EOL so we can do string functions on it */
+			*eol = '\0';
+			command(rodent, buf);
+
+			/* Shift the buffer over */
 			strlcpy(buf, (eol + 1), BUFLEN);
 			len -= (eol - buf) + 1;
 		}
 	}
 }
 
-static void command(rodent_t *rodent, char *buf, char *eol) {
-	char *string;
+static void command(rodent_t *rodent, char *buf) {
+	char *string = buf;
 	char *tok;
-	int len = strlen(buf);
+	int len = strlen(string);
 	mouse_info_t delta;
 	
-	/* Null the EOL so we can do string functions on it */
-	*eol = '\0';
-
 	memset(&delta, 0, sizeof(mouse_info_t));
-
-	string = malloc(len + 1);
-	strlcpy(string, buf, len + 1);
 
 	tok = strsep(&string, " ");
 
