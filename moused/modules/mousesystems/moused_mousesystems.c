@@ -24,38 +24,40 @@ MOUSED_INIT_FUNC {
 }
 
 MOUSED_PROBE_FUNC {
+	int level = 0;
 	rodent->mfd = open(rodent->device, O_RDWR);
 
 	if (-1 == rodent->mfd)
 		logfatal(1, "Unable to open %s", rodent->device);
 
+	for (level = 0; level < 3; level++) {
+		/* Set the driver operation level */
+		ioctl(rodent->mfd, MOUSE_SETLEVEL, &level);
+		ioctl(rodent->mfd, MOUSE_GETMODE, &(rodent->mode));
+		if (MOUSE_PROTO_MSC == rodent->mode.protocol)
+			break;
+	}
+	if (MOUSE_PROTO_MSC != rodent->mode.protocol)
+		return MODULE_PROBE_FAIL;
+
 	return MODULE_PROBE_SUCCESS;
 }
 
 MOUSED_RUN_FUNC {
-	int level = 0; /* mouse systems */
-	mousehw_t hw;
-	mousemode_t mode;
 	char *packet;
-	
-	/* Set the driver operation level */
-	ioctl(rodent->mfd, MOUSE_SETLEVEL, &level);
 
-	ioctl(rodent->mfd, MOUSE_GETHWINFO, &hw);
-	printf("NumButtons: %d\n", hw.buttons);
+	ioctl(rodent->mfd, MOUSE_GETHWINFO, &(rodent->hw));
+	printf("NumButtons: %d\n", rodent->hw.buttons);
 
-	ioctl(rodent->mfd, MOUSE_GETMODE, &mode);
-	printf("Packetsize: %d\n", mode.packetsize);
-
-	packet = malloc(mode.packetsize);
+	packet = malloc(rodent->mode.packetsize);
 
 	for (;;) {
 		int bytes, x;
-		bytes = read(rodent->mfd, packet, mode.packetsize);
+		bytes = read(rodent->mfd, packet, rodent->mode.packetsize);
 		if (bytes < 0)
 			logfatal(1, "Error reading from mousey");
 		
-		if (bytes == mode.packetsize)
+		if (bytes == rodent->mode.packetsize)
 			activity(rodent, packet);
 	}
 }
