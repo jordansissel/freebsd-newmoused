@@ -28,7 +28,8 @@ static void command(rodent_t *rodent, char *buf);
  * always return SUCCESS.
  *
  * XXX: Should we return FAIL if there is a device specified?
- * I think so..
+ * Or should we check if the device specified is a file or file descriptor?
+ *
  */
 MOUSED_PROBE_FUNC {
 	return MODULE_PROBE_SUCCESS;
