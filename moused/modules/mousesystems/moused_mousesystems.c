@@ -42,7 +42,7 @@ MOUSED_RUN_FUNC {
 	ioctl(rodent->mfd, MOUSE_SETLEVEL, &level);
 
 	ioctl(rodent->mfd, MOUSE_GETHWINFO, &hw);
-	printf("Buttons: %d\n", hw.buttons);
+	printf("NumButtons: %d\n", hw.buttons);
 
 	ioctl(rodent->mfd, MOUSE_GETMODE, &mode);
 	printf("Packetsize: %d\n", mode.packetsize);
@@ -68,12 +68,14 @@ static void activity(rodent_t *rodent, char *packet) {
 	delta.u.data.buttons = 0;
 	delta.u.data.x = delta.u.data.y = delta.u.data.z = 0;
 
+	/*
 	for (x = 0; x < 8; x++)
 		printf("%02x ", (*(packet + x) & 0xff));
 	printf("\n");
+	*/
+	//printbits(*packet);
 
 	/* mouse(4) details what is in the 5-byte packets */
-	printbits(*packet);
 
 	delta.u.data.buttons |= NBIT(*packet, 3) 
 		                     | NBIT(*packet, 2) << 1
@@ -85,8 +87,8 @@ static void activity(rodent_t *rodent, char *packet) {
 	/* Bytes 3 and 5 are vertical */
 	delta.u.data.y = 0 - (*(packet + 2) + *(packet + 4)); 
 
-	printf("(%d,%d) ", delta.u.data.x, delta.u.data.y);
-	printbits(delta.u.data.buttons);
+	//printf("(%d,%d) ", delta.u.data.x, delta.u.data.y);
+	//printbits(delta.u.data.buttons);
 
 	rodent->update(&delta);
 }
