@@ -2,18 +2,24 @@
 #ifndef MOUSED_H
 #define MOUSED_H
 
+#include <syslog.h>
+
 struct rodentparam;
 typedef struct rodentparam rodent_t;
-
 
 struct rodentparam {
 	char *device;
 	char *modulename;
 	char *configfile;
-	int cfd;
+	int cfd;            /* /dev/consolectl fd */
+	int mfd;            /* mouse device fd */
+
+	mousemode_t mode;
+	mousehw_t hw;
 
 	/* Modules will call this to pass deltas to sysmouse(4) */
 	int (*update)(struct mouse_info *);
+	void (*logmsg)(int, int, const char *, ...);
 
 	/* Module callbacks (called by moused) */
 	int (*init)(rodent_t *, int, char **);
@@ -28,5 +34,14 @@ struct rodentparam {
 /* Probe function return values */
 #define MODULE_PROBE_FAIL    0
 #define MODULE_PROBE_SUCCESS 1
+
+/* Bit math, helpful for modules */
+#define BIT(num, bit) (((num) & (1 << (bit - 1))) ? 1 : 0)
+#define NBIT(num, bit) ((BIT(num,bit)) ^ 1)
+
+#define logfatal(e, fmt, args...) do {                         \
+	logmsg(LOG_DAEMON | LOG_ERR, errno, fmt, ##args);           \
+	exit(e);                                                    \
+} while (0)
 
 #endif
