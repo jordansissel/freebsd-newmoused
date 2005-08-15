@@ -11,7 +11,6 @@ __FBSDID("Happy Cakes!");
 #include <err.h>
 #include <errno.h>
 #include <stdarg.h>
-#include <syslog.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -35,11 +34,6 @@ static int update(struct mouse_info *delta);
 		warnx(fmt, ##args);                                      \
 } while (0)
 
-#define logfatal(e, fmt, args...) do {                         \
-	logmsg(LOG_DAEMON | LOG_ERR, errno, fmt, ##args);           \
-	exit(e);                                                    \
-} while (0)
-
 #define MOUSED_OPTIONS "d:m:f:"
 
 static rodent_t rodent = {
@@ -48,6 +42,7 @@ static rodent_t rodent = {
 	.configfile = "/etc/moused.conf",
 	.cfd = 0,
 	.update = update, /* Modules call moused's update(...) to talk to sysmouse */
+	.logmsg = logmsg, /* Modules call moused's logmsg(...) log stuff */
 };
 
 int main(int argc, char **argv) {
@@ -96,8 +91,14 @@ int moused(int argc, char **argv) {
 			rodent.init(&rodent, argc, argv);
 		}
 
+		if (NULL == rodent.probe)
+			logfatal(1, "Module '%s' has no PROBE function?!", rodent.modulename);
+
 		if (rodent.probe(&rodent) == MODULE_PROBE_SUCCESS) {
 			/* MAIN FUNCTION */
+			if (NULL == rodent.run)
+				logfatal(1, "Module '%s' has no RUN function?!", rodent.modulename);
+
 			rodent.run(&rodent);
 		}
 	} else {
