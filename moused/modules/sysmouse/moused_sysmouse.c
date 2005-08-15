@@ -103,10 +103,13 @@ static void activity(rodent_t *rodent, char *packet) {
 	delta.u.data.buttons = 0;
 	delta.u.data.x = delta.u.data.y = delta.u.data.z = 0;
 
-	for (x = 0; x < 8; x++)
-		printf("%02x ", (*(packet + x) & 0xff));
-	printf("\n");
-	printbits(*packet);
+	if (0)
+	{
+		for (x = 0; x < 8; x++)
+			printf("%02x ", (*(packet + x) & 0xff));
+		printf("\n");
+		printbits(*packet);
+	}
 
 	/* sysmouse(4) details what is in the 8-byte packets */
 
@@ -124,8 +127,8 @@ static void activity(rodent_t *rodent, char *packet) {
 	if (MOUSE_PROTO_SYSMOUSE == mouseproto)
 		delta.u.data.z = (*(packet + 5) + *(packet + 6));
 
-	printf("(%d,%d) ", delta.u.data.x, delta.u.data.y);
-	printbits(delta.u.data.buttons);
+	//printf("(%d,%d) ", delta.u.data.x, delta.u.data.y);
+	//printbits(delta.u.data.buttons);
 
 	rodent->update(&delta);
 }
