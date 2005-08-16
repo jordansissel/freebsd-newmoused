@@ -72,34 +72,25 @@ MOUSED_PROBE_FUNC {
 	return MODULE_PROBE_SUCCESS;
 }
 
-MOUSED_RUN_FUNC {
-	char *packet;
-	fd_set fds;
+MOUSED_HANDLER_INIT_FUNC {
+	warnx("init");
+	if (NULL == rodent->packet)
+		rodent->packet = malloc(rodent->mode.packetsize);
+}
 
-	ioctl(rodent->mfd, MOUSE_GETHWINFO, &(rodent->hw));
-	printf("NumButtons: %d\n", rodent->hw.buttons);
+MOUSED_HANDLER_FUNC {
+	int bytes;
 
-	packet = malloc(rodent->mode.packetsize);
+	bytes = read(rodent->mfd, rodent->packet, rodent->mode.packetsize);
+	if (bytes < 0)
+		return;
+		//logfatal(1, "Error reading from mousey");
 
-	FD_ZERO(&fds);
-	FD_SET(rodent->mfd, &fds);
-
-	for (;;) {
-		int tries = 0;
-		int bytes, x, c;
-
-		c = select(FD_SETSIZE, &fds, NULL, NULL, NULL); /* wait forever */
-		if (c < 0) {
-			logfatal(1, "Error with select call");
-		} else if (c > 0) {
-			bytes = read(rodent->mfd, packet, rodent->mode.packetsize); 
-			if (bytes < 0)
-				logfatal(1, "Error reading from mousey");
-		
-			if (bytes == rodent->mode.packetsize)
-				activity(rodent, packet);
-		}
-	}
+	if (bytes == rodent->mode.packetsize)
+		activity(rodent, rodent->packet);
+	else
+		logfatal(1, "Unexpected data. Needed packet of size %d, got %d",
+					rodent->mode.packetsize, bytes);
 }
 
 static void activity(rodent_t *rodent, char *packet) {
@@ -133,10 +124,6 @@ static void activity(rodent_t *rodent, char *packet) {
 	/* sysmouse adds z-axis changes */
 	if (MOUSE_PROTO_SYSMOUSE == mouseproto)
 		delta.u.data.z = (*(packet + 5) + *(packet + 6));
-
-	//printf("%d\n", delta.u.data.z);
-	//printf("(%d,%d) ", delta.u.data.x, delta.u.data.y);
-	//printbits(delta.u.data.buttons);
 
 	rodent->update(&delta);
 }
