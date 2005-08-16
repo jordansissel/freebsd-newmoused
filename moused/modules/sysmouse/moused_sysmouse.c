@@ -19,8 +19,18 @@ static void (*logmsg)(int, int, const char *, ...) = NULL;
 
 static void activity(rodent_t *rodent, char *packet);
 static void printbits(char packet);
+static int tryproto(rodent_t *rodent, int proto);
+static char *getmouseproto(int proto);
 
 static int mouseproto = MOUSE_PROTO_SYSMOUSE;
+
+static struct mouse_protomap {
+	int proto;
+	char *name;
+} protomap[] = {
+	{ .proto = MOUSE_PROTO_SYSMOUSE, .name = "sysmouse" },
+	{ .proto = MOUSE_PROTO_MSC, .name = "mousesystems" },
+};
 
 MOUSED_INIT_FUNC {
 	int c;
@@ -42,7 +52,6 @@ MOUSED_INIT_FUNC {
 	} else {
 		warnx("Unknown protocol '%s' - defaulting to sysmouse", type);
 	}
-
 }
 
 MOUSED_PROBE_FUNC {
@@ -52,15 +61,13 @@ MOUSED_PROBE_FUNC {
 	if (-1 == rodent->mfd)
 		logfatal(1, "Unable to open %s", rodent->device);
 
-	for (level = 0; level < 3; level++) {
-		/* Set the driver operation level */
-		ioctl(rodent->mfd, MOUSE_SETLEVEL, &level);
-		ioctl(rodent->mfd, MOUSE_GETMODE, &(rodent->mode));
-		if (mouseproto == rodent->mode.protocol)
-			break;
+	if (tryproto(rodent, mouseproto) == 0) { 
+		/* Try the other protocol */
+	mouseproto = (mouseproto == MOUSE_PROTO_SYSMOUSE ? 
+						  MOUSE_PROTO_MSC : MOUSE_PROTO_SYSMOUSE);
+		if (tryproto(rodent, mouseproto) == 0)
+			return MODULE_PROBE_FAIL;
 	}
-	if (mouseproto != rodent->mode.protocol)
-		return MODULE_PROBE_FAIL;
 
 	return MODULE_PROBE_SUCCESS;
 }
@@ -127,6 +134,7 @@ static void activity(rodent_t *rodent, char *packet) {
 	if (MOUSE_PROTO_SYSMOUSE == mouseproto)
 		delta.u.data.z = (*(packet + 5) + *(packet + 6));
 
+	//printf("%d\n", delta.u.data.z);
 	//printf("(%d,%d) ", delta.u.data.x, delta.u.data.y);
 	//printbits(delta.u.data.buttons);
 
@@ -139,4 +147,27 @@ static void printbits(char byte) {
 		printf("%d", BIT(byte, x));
 	}
 	printf("\n");
+}
+
+static int tryproto(rodent_t *rodent, int proto) {
+	int level;
+	warnx("Trying %s protocol", getmouseproto(proto));
+
+	for (level = 0; level < 3; level++) {
+		/* Set the driver operation level */
+		ioctl(rodent->mfd, MOUSE_SETLEVEL, &level);
+		ioctl(rodent->mfd, MOUSE_GETMODE, &(rodent->mode));
+		if (mouseproto == rodent->mode.protocol)
+			return 1;
+	}
+
+	return 0;
+}
+
+static char *getmouseproto(int proto) {
+	int x;
+	for (x = 0; x < (sizeof(protomap) / sizeof(struct mouse_protomap)); x++) {
+		if (protomap[x].proto == proto)
+			return protomap[x].name;
+	}
 }
