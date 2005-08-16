@@ -222,12 +222,6 @@ static void filter(mouse_info_t *delta, int noop) {
 					distance = 0;
 				}
 
-				//if (delta->u.data.x > 4) {
-					//delta->u.data.z += 2;
-				//} else if (delta->u.data.x < 4) {
-					//delta->u.data.z += -2;
-				//}
-
 				/* Do not move! */
 				delta->u.data.x = delta->u.data.y = 0;
 			}
@@ -235,6 +229,17 @@ static void filter(mouse_info_t *delta, int noop) {
 			/* Don't click middle */
 			delta->u.data.buttons &= ~(1<<1);
 		} else {
+			/* 
+			 * We were ready to scroll, but the user let go of middle-mouse
+			 * Fire mouse-down myself (in here), the mouse up will happen on it's
+			 * own in update()
+			 */
+			if (SCROLLREADY == state) {
+				/* Send middle-mouse-down */
+				delta->u.data.buttons |= (1<<1);
+				ioctl(rodent.cfd, CONS_MOUSECTL, delta);
+				delta->u.data.buttons &= ~(1<<1);
+			}
 			state = NORMAL;
 		}
 	}
