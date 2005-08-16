@@ -16,6 +16,9 @@ struct rodentparam {
 
 	mousemode_t mode;
 	mousehw_t hw;
+	mouse_info_t state;
+
+	char *packet;    /* Used repeatedly by a plugin, keep it here */
 
 	/* Modules will call this to pass deltas to sysmouse(4) */
 	int (*update)(struct mouse_info *);
@@ -24,11 +27,25 @@ struct rodentparam {
 	/* Module callbacks (called by moused) */
 	int (*init)(rodent_t *, int, char **);
 	int (*probe)(rodent_t *);
-	int (*run)(rodent_t *);
+	void (*run)(rodent_t *);                /* for standalone mode */
+
+	void (*handler)(rodent_t *);            /* for packet-handler mode */
+	void (*handler_init)(rodent_t *);       /* for packet-handler init*/
+
+	void (*timeout)(rodent_t *);            /* select(2) timeouts call this 
+														  * when in handler mode */
 };
 
 #define MOUSED_INIT_FUNC  int init(rodent_t *rodent, int argc, char **argv)
 #define MOUSED_PROBE_FUNC int probe(rodent_t *rodent)
+#define MOUSED_HANDLER_FUNC void handler(rodent_t *rodent)
+#define MOUSED_HANDLER_INIT_FUNC void handler_init(rodent_t *rodent)
+
+/*
+ * *** XXX:DEPRECATED ***
+ * Should this (RUN) method even be allowed? Is it useful to have the plugin 
+ * handle things like select(2) calls and such?
+ */
 #define MOUSED_RUN_FUNC   void run(rodent_t *rodent)
 
 /* Probe function return values */
